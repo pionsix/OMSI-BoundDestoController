@@ -1,0 +1,10 @@
+Files changed:
+
+Scripts:
+IBIS-2.osc - core changes of mod
+IBIS_varlist.txt - associated with above
+VMatrix.osc - remove sections resetting matrix if code 0
+Ticketprinter.osc - Removes error trying to load IBIS_route.
+
+Textures
+Corrects IBIS panel

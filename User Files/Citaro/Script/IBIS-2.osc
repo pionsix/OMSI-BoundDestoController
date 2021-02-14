@@ -1,0 +1,453 @@
+'##############
+'IBIS Script
+'##############
+
+'80s style IBIS (Integrated Board Information System)
+
+'(c) 15.04.2009 Rüdiger Hülsmann
+'(c) 17.01.2011 Marcel Kuhnt
+'(c) 22.06.2011 Markus Rabe
+
+'Script Version: 1.1
+'Omsi release: 1.0
+
+'Needs:
+'- Cockpit (Batterietrennschalter)
+'- Door (Haltestellenbremse)
+
+'Revision History:
+'- Marcel Kuhnt		Main Functions Added			12.06.2009
+'- Marcel Kuhnt		Removed Matrix show,			09.07.2009
+'			completed Pax Info,
+'			Debugging
+'- Marcel Kuhnt		Changed Logic showing			14.10.2009
+'			Terminus every time,
+'			Date & Time mode,
+'			Enwerter
+'- Marcel Kuhnt		Added station announcements		09.05.2010
+'- Rüdiger Hülsmann	Added interior busstop display		08.12.2010
+'- Marcel Kuhnt		Reworked busstop display for
+'			new depot file system			10.12.2010
+'- Rüdiger Hülsmann	D92 display flicker debugged		25.12.2010
+'- Marcel Kuhnt		Don't show busstops if no route		07.01.2011
+'- Marcel Kuhnt		9xx00 => 9xx04 instead of 9xx35!	17.01.2011
+'- Rüdiger Hülsmann	Station announcements deactivated
+'			(only IBIS-2)				24.01.2011
+'- Rüdiger Hülsmann	blink bug removed			26.01.2011
+'- Markus Rabe		Linie/Kurs ändern löscht Route		22.06.2011
+'			autom. Rückkehr in Modus 0
+'			Route 0 möglich
+'- Marcel Kuhnt		Auf aktuelle Busbar-Logik angepasst	09.07.2012
+'- Brendan Wong		Logic changed and symplified to match
+'					typical Australian bus
+'					(Route/4 digit Destination)			24.12.2020
+
+
+'--------------------------------------------------------------------------------
+
+'IBIS Modes:
+
+'	0:	Normal / stop display
+'	1:	Line / course entry
+'	2:	Route input
+'	3:	Destination input
+'	4:	Error "wrong route"
+'	5:	Debug: show Terminus-Matrix
+'	6:	Error "wrong destination"
+'	7:	Debug: show Line-Matrix
+'	8:	Show destination in IBIS
+'	9:	Date and Time
+
+
+'----------------------
+'	Trigger
+'----------------------
+
+{trigger:IBIS_1}
+	1 (M.L.IBIS_Zahlentasten)
+{end}
+
+{trigger:IBIS_2}
+	2 (M.L.IBIS_Zahlentasten)
+{end}
+
+{trigger:IBIS_3}
+	3 (M.L.IBIS_Zahlentasten)
+{end}
+
+{trigger:IBIS_4}
+	4 (M.L.IBIS_Zahlentasten)
+{end}
+
+{trigger:IBIS_5}
+	5 (M.L.IBIS_Zahlentasten)
+{end}
+
+{trigger:IBIS_6}
+	6 (M.L.IBIS_Zahlentasten)
+{end}
+
+{trigger:IBIS_7}
+	7 (M.L.IBIS_Zahlentasten)
+{end}
+
+{trigger:IBIS_8}
+	8 (M.L.IBIS_Zahlentasten)
+{end}
+
+{trigger:IBIS_9}
+	9 (M.L.IBIS_Zahlentasten)
+{end}
+
+{trigger:IBIS_0}
+	0 (M.L.IBIS_Zahlentasten)
+{end}
+
+{trigger:IBIS_setmode_linie_kurs}
+
+	(L.L.elec_busbar_main) (C.L.elec_busbar_minV) >
+	{if}
+		0 (S.L.IBIS_input) (S.L.IBIS_input_count)
+		0 (S.L.IBIS_modetimer)
+		1 (S.L.IBIS_mode)
+		(T.L.ev_IBIS_piep)
+	{endif}
+	
+{end}
+
+{trigger:IBIS_setmode_ziel}
+
+	(L.L.elec_busbar_main) (C.L.elec_busbar_minV) >
+	{if}
+		0 (S.L.IBIS_input) (S.L.IBIS_input_count)
+		0 (S.L.IBIS_modetimer)
+		3 (S.L.IBIS_mode)
+		(T.L.ev_IBIS_piep)
+	{endif}
+	
+{end}
+
+{trigger:IBIS_eingabe}
+
+	(L.L.elec_busbar_main) (C.L.elec_busbar_minV) >
+	{if}
+'***********************
+' Enter Route Number:
+'***********************
+		(L.L.IBIS_mode) 1 =
+		{if}
+			0 (S.L.IBIS_mode)
+			(T.L.ev_IBIS_piep)
+			"" (S.$.IBIS)
+
+' Share Input
+
+			(L.L.IBIS_input) s0
+			
+			l0 1000 <
+			{if}
+				l0 s1 (S.L.IBIS_LinieKurs) (S.L.IBIS_RouteCodeDisplay)
+			{else}
+				l0 10000 <
+				{if}
+					l0 10 / trunc
+				{else}
+					l0 100 / trunc
+				{endif}
+				s1 (S.L.IBIS_LinieKurs) (S.L.IBIS_RouteCodeDisplay)
+			{endif}
+			
+			l0 l1 - (S.L.IBIS_Linie_Suffix) s0
+			100 l1 * l0 + (S.L.IBIS_Linie_Complex)
+
+'ANNAX-Test:
+'			7 (S.L.IBIS_mode)
+
+' Entwerter umstellen:
+'			(T.L.ev_IBIS_entwerter)
+			(M.L.IBIS_SetComplexLineString)
+
+		{else}
+'***********************
+' Enter Destination Code:
+'***********************
+		(L.L.IBIS_mode) 3 =
+		{if}
+' Entry is the terminus code
+			(L.L.IBIS_input) s1
+' Get Route Num (First three)
+			l1 10 / trunc (S.L.IBIS_RouteCode)
+' Get Route Variation (Last Char)
+			l1 (L.L.IBIS_RouteCode) 10 * - (S.L.IBIS_RouteVariation)
+
+			(L.L.IBIS_RouteCode) 100 * (L.L.IBIS_RouteVariation) + (M.V.GetRouteIndex) s1
+			0 <
+				{if}
+' If less than 0, i.e. -1, then incorrect, then do not accept but output an error message:
+					4 (S.L.IBIS_mode)
+'		Activate blinker:
+					1 (S.L.IBIS_BlinkOn) (S.L.IBIS_BlinkInitial)
+					(L.S.GetTime) (S.L.IBIS_BlinkTimer)
+'		Error beeping
+					(T.L.ev_IBIS_pieperror)
+				{else}
+					0 (S.L.IBIS_RouteCodeDisplay) (S.L.IBIS_LinieKurs) (S.L.IBIS_Linie_Complex)
+					(L.L.IBIS_RouteCode) 10 * (L.L.IBIS_RouteVariation) + (S.L.IBIS_DestoCode)
+					(T.L.ev_IBIS_piep)
+					(M.L.IBIS_SetRoute)
+
+'ANNAX-Test:
+'					7 (S.L.IBIS_mode)
+					0 (S.L.IBIS_modetimer)
+					8 (S.L.IBIS_mode)
+				{endif}
+			{endif}
+		{else}
+'***********************
+' Eingabe Fehler/Debug:
+'***********************
+		(L.L.IBIS_mode) 4 =
+		(L.L.IBIS_mode) 5 = ||
+		(L.L.IBIS_mode) 6 = ||
+		(L.L.IBIS_mode) 7 = ||
+		{if}
+			0 (S.L.IBIS_mode)
+			(T.L.ev_IBIS_piep)
+		{endif}
+		{endif}
+		{endif}
+		{endif}
+	{endif}
+	
+{end}
+
+{trigger:IBIS_loeschen}
+	
+	(L.L.elec_busbar_main) (C.L.elec_busbar_minV) >
+	{if}
+		(T.L.ev_IBIS_piep)
+		0 (S.L.IBIS_mode)
+	{endif}
+{end}
+
+'----------------------
+'	Init
+'----------------------
+
+{macro:IBIS_init}
+	"     " (S.$.IBIS_Complex_Line)
+	-1 (S.L.IBIS_RouteIndex)
+{end}
+
+'----------------------
+'	Frame
+'----------------------
+
+{macro:IBIS_frame}
+	(L.L.elec_busbar_main) (C.L.elec_busbar_minV) >
+	{if}
+
+'----------------
+' Opening melody
+		(L.L.IBIS_energy_last) !
+		{if}
+			(T.L.ev_IBIS-startupsound)
+			0 (S.L.IBIS_mode)
+		{endif}
+
+'----------------
+' Let the indicators run:
+
+		(L.L.IBIS_BlinkTimer) s0 0 <
+		{if}
+			(L.S.GetTime) (S.L.IBIS_BlinkTimer) s0
+		{endif}
+
+' When time is up:
+		(L.S.GetTime) l0 - s0
+		1.2 > (L.L.IBIS_BlinkInitial) && l0 0.833 > ||
+		{if}
+			(L.L.IBIS_BlinkOn) ! (S.L.IBIS_BlinkOn)
+			0 (S.L.IBIS_BlinkInitial)
+			(L.S.GetTime) (S.L.IBIS_BlinkTimer)
+		{endif}
+
+' Switch back to normal mode (IBIS_mode 0) after 10 sec
+		(L.L.IBIS_mode) 0 = !
+		(L.L.IBIS_mode) 9 = ! &&
+		{if}
+			(L.L.IBIS_modetimer) (L.S.Timegap) + (S.L.IBIS_modetimer)
+			(L.L.IBIS_modetimer) 10 >=
+			{if}
+				0 (S.L.IBIS_mode)
+			{endif}
+		{endif}
+
+'----------------
+' Display representation:
+		
+		(L.L.IBIS_mode) 1 =
+		{if}
+			"ROUTE         :"
+			(L.L.IBIS_input_count) 0 =
+			{if}
+				(L.L.IBIS_LinieKurs) "03" $IntToStrEnh $+
+			{else}
+				" " 3 (L.L.IBIS_input_count) - $* $+ (L.L.IBIS_input) "0" (L.L.IBIS_input_count) $IntToStr $+ $IntToStrEnh $+ 
+			{endif}
+		{else}
+		(L.L.IBIS_mode) 2 =
+		{if}
+			"VARIATION        :" " " 2 (L.L.IBIS_input_count) - $* $+ (L.L.IBIS_input) "0" (L.L.IBIS_input_count) $IntToStr $+ $IntToStrEnh $+ 
+		{else}
+		(L.L.IBIS_mode) 3 =
+		{if}
+			"DESTINATION    :" " " 4 (L.L.IBIS_input_count) - $* $+ (L.L.IBIS_input) "0" (L.L.IBIS_input_count) $IntToStr $+ $IntToStrEnh $+ 
+		{else}
+		(L.L.IBIS_mode) 4 =
+		{if}
+			(L.L.IBIS_BlinkOn)
+			{if}
+				" INVALID VARIATION  "
+			{else}
+				""
+			{endif}
+		{else}
+		(L.L.IBIS_mode) 6 =
+		{if}
+			(L.L.IBIS_BlinkOn)
+			{if}
+				" INVALID DESTINATION  "
+			{else}
+				""
+			{endif}
+		{else}
+' To test the content of the Annax:
+'		(L.L.IBIS_mode) 5 =
+'		{if}
+'			(L.$.Matrix_Right)
+'		{else}
+' To test the content of the line annax:
+'		(L.L.IBIS_mode) 7 =
+'		{if}
+'			"--" (L.$.Matrix_Nr) $+ "--" $+ 12 $SetLengthL 16 $SetLengthR
+'		{else}
+' Displaying the target label text on the IBIS:
+		(L.L.IBIS_mode) 8 =
+		{if}
+			(L.$.IBIS_terminus_name) 20 $SetLengthL
+		{else}
+		(L.L.IBIS_mode) 9 =
+		{if}
+'			"13.11.84   01:21"
+
+'		Day:
+			(L.S.Day) "02" $IntToStrEnh "." $+
+'		Month:
+			(L.S.Month) "02" $IntToStrEnh $+ "." $+
+'		Year:
+			(L.S.Year) $IntToStr 4 $SetLengthR $+ "     " $+
+'		Hour:
+			(L.S.Time) 3600 / s0 trunc s1 "02" $IntToStrEnh $+ ":" $+
+'		Minutes:
+			l0 l1 - 60 * trunc "02" $IntToStrEnh $+
+		{else}
+			"" 20 $SetLengthL
+		{endif}
+		{endif}
+		{endif}
+		{endif}
+		{endif}
+'		{endif}
+'		{endif}
+		{endif}
+		{endif}
+
+		"@" $+
+
+' Route Num:
+		(L.L.IBIS_RouteCodeDisplay) "03" $IntToStrEnh $+
+		" " $+
+' Desto Code:
+		(L.L.IBIS_DestoCode) "04" $IntToStrEnh $+
+' Time:
+		" " $+
+'		Hour:
+			(L.S.Time) 3600 / s0 trunc s1 "02" $IntToStrEnh $+ ":" $+
+'		Minutes:
+			l0 l1 - 60 * trunc "02" $IntToStrEnh $+
+		"     " $+ (S.$.IBIS)
+	{else}
+		"" (S.$.IBIS)
+	{endif}
+
+' Omsi say that the strings output should be updated:
+	1 (S.L.Refresh_Strings)
+
+'----------------
+' Last energy:
+	(L.L.elec_busbar_main) (C.L.elec_busbar_minV) > (S.L.IBIS_energy_last)
+
+'----------------
+{end}
+
+'----------------------
+'	Macros
+'----------------------
+
+{macro:IBIS_Zahlentasten}
+	s0
+	(L.L.elec_busbar_main) (C.L.elec_busbar_minV) >
+	{if}
+'		Route Entry
+		(L.L.IBIS_mode) 1 = (L.L.IBIS_input_count) 3 < &&
+'		Variation Entry
+		(L.L.IBIS_mode) 2 = (L.L.IBIS_input_count) 2 < && ||
+'		Destination Entry
+		(L.L.IBIS_mode) 3 = (L.L.IBIS_input_count) 4 < && ||
+		{if}
+			(L.L.IBIS_input) 10 * l0 + (S.L.IBIS_input)
+			(L.L.IBIS_input_count) 1 + (S.L.IBIS_input_count)
+			(T.L.ev_IBIS_piep)
+		{else}
+			l0 0 =
+			{if}
+				9 (S.L.IBIS_mode)
+				(T.L.ev_IBIS_piep)
+			{endif}
+		{endif}
+		0 (S.L.IBIS_modetimer)
+	{endif}
+{end}
+
+{macro:IBIS_SetRoute}
+
+' Macro sets the route index to the value of l1 and carries out the necessary steps
+
+' If valid, then apply:
+	l1 (S.L.IBIS_RouteIndex)
+' Finding the corresponding target index:
+	(M.V.GetRouteTerminusIndex) (S.L.IBIS_TerminusIndex)
+' Finding the corresponding target code:
+	(M.V.GetTerminusCode) (S.L.IBIS_TerminusCode)
+' Update the target label text:
+	(M.L.IBIS_RefreshTerminusText)
+' Show target:
+	0 (S.L.IBIS_modetimer)
+	8 (S.L.IBIS_mode)
+
+	(M.L.IBIS_SetComplexLineString)
+{end}
+
+{macro:IBIS_RefreshTerminusText}
+	(L.L.IBIS_TerminusIndex) 0 (M.V.GetTerminusString) (S.$.IBIS_terminus_name)
+{end}
+
+{macro:IBIS_SetComplexLineString}
+'Linie/Kurs:
+	(L.L.IBIS_LinieKurs) "03" $IntToStrEnh
+'Linien-Suffix:
+	(L.L.IBIS_Linie_Suffix) "02" $IntToStrEnh $+
+	(S.$.IBIS_Complex_Line)
+{end}
+

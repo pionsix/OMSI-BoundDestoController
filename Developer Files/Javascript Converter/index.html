@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en-au">
+<head>
+  <meta charset="utf-8">
+
+  <title>OMSI HOF</title>
+  <meta name="description" content="Excel to OMSI HOF">
+  <meta name="author" content="Brendan Wong">
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="js/scripts.js"></script>
+</head>
+<body>
+    <textarea id="input" placeholder="Paste from Excel Here" spellcheck="false"></textarea>
+    <br>
+    <input type="text" id="title" spellcheck="false" placeholder="HOF Title"></textarea>
+    <br>
+    <select id="version">
+      <option value="1">Legacy</option>
+      <option value="2">New</option>
+      <option value="N">N - North Sydney (SB)</option>
+      <option value="T">T - Terry Hills (Forest)</option>
+      <option value="V">V - Brookvale (SB)</option>
+    </select>
+    <button id="build">Generate</button>
+    <button id="copy">Copy Output</button>
+    <br>
+    <textarea id="output" placeholder="output" spellcheck="false"></textarea>
+</body>
+</html>
