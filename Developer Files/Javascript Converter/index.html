@@ -1,13 +1,12 @@
 <!doctype html>
 <html lang="en-au">
 <head>
-  <meta charset="utf-8">
-
-  <title>OMSI HOF</title>
-  <meta name="description" content="Excel to OMSI HOF">
-  <meta name="author" content="Brendan Wong">
-  <link rel="stylesheet" href="css/styles.css">
-  <script src="js/scripts.js"></script>
+    <meta charset="utf-8">
+    <title>OMSI HOF</title>
+    <meta name="description" content="Excel to OMSI HOF">
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="js/scripts.js"></script>
+    <script src="js/tools.js"></script>
 </head>
 <body>
     <textarea id="input" placeholder="Paste from Excel Here" spellcheck="false"></textarea>
@@ -21,6 +20,10 @@
       <option value="T">T - Terry Hills (Forest)</option>
       <option value="V">V - Brookvale (SB)</option>
     </select>
+	<input type="checkbox" id="hanover" name="Hanover" value="1">
+	<label for="hanover">Studio Polygon Hanover?</label><br>
+    <input type="checkbox" id="customFonts" name="customFonts" value="1">
+    <label for="customFonts">Use Custom Fonts (BNE only)?</label><br>
     <button id="build">Generate</button>
     <button id="copy">Copy Output</button>
     <br>
