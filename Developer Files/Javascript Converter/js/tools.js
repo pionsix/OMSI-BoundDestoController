@@ -27,7 +27,7 @@ function generateHanoverScroll(code, current, scrolling = 0, route) {
                 code = codeArray[2] * 1000 + parseInt(codeArray[1]);
             }
             //return (scrolling === 0) ? "1" + code.toString().padStart(4, "0") :  + ((current + 1) * 10000 + code).toString();
-            return (scrolling === 0) ? code.toString().padStart(4, "0") :  + ((current + 1) * 10000 + code).toString();
+            return (scrolling === 0) ? "1" + code.toString().padStart(4, "0") :  + ((current + 1) * 10000 + code).toString();
     }
 }
 
