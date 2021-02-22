@@ -145,7 +145,7 @@ function generateDestoData(desto, version, title, hanover, customFont) {
                         bottom = desto[i][6]; // Bottom Line
                     } else {
                         top = desto[i][6]; // Top Line
-                        bottom = desto[i][7 + current]; // Bottom Line
+                        bottom = desto[i][7 + current] + ((desto[i][13 + current].includes("*K")) ? "*0605N1E1" : ""); // Bottom Line
                     }
 
                     terminus += outputHanoverDestoLine(
