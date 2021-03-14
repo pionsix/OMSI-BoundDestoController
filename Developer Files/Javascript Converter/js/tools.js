@@ -25,6 +25,8 @@ function generateHanoverScroll(code, current, scrolling = 0, route) {
             if (code.indexOf(route) !== -1 && route !== "") {
                 let codeArray = code.match(/^[A-Za-z]?(\w{1,3})(\w)$/); // Invert
                 code = codeArray[2] * 1000 + parseInt(codeArray[1]);
+            } else {
+                code = parseInt(code);
             }
             //return (scrolling === 0) ? "1" + code.toString().padStart(4, "0") :  + ((current + 1) * 10000 + code).toString();
             return (scrolling === 0) ? "1" + code.toString().padStart(4, "0") :  + ((current + 1) * 10000 + code).toString();
