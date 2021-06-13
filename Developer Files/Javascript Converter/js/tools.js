@@ -12,25 +12,19 @@ function manageRouteNumber(desto, customFont){
     }
 }
 
-function generateHanoverScroll(code, current, scrolling = 0, route) {
-    let version = 2
-    switch (version) {
-        case 0:
-            return (scrolling === 0) ? code.padStart(4, "0") : (current + 1) * 10000 + parseInt(code); //V1
-        case 1:
-            return (scrolling === 0) ? code.padStart(4, "0") : (current * 10000 + parseInt(code)).toString(); //V2
-        case 2:
-        default:
-            route = route.replace(/\D/, "");
-            if (code.indexOf(route) !== -1 && route !== "") {
-                let codeArray = code.match(/^[A-Za-z]?(\w{1,3})(\w)$/); // Invert
-                code = codeArray[2] * 1000 + parseInt(codeArray[1]);
-            } else {
-                code = parseInt(code);
-            }
-            //return (scrolling === 0) ? "1" + code.toString().padStart(4, "0") :  + ((current + 1) * 10000 + code).toString();
-            return (scrolling === 0) ? "1" + code.toString().padStart(4, "0") :  + ((current + 1) * 10000 + code).toString();
+function generateHanoverScroll(code, route, fixed = false, current = 0, scrolling = 0) {
+    route = route.replace(/\D/, "");
+    if (!fixed) {
+        let codeArray = code.match(/^[A-Za-z]?(\w{1,3})(\w)$/); // Invert
+        code = codeArray[2] * 1000 + parseInt(codeArray[1]);
+    } else {
+        code = parseInt(code);
     }
+
+    if (current == 0) {
+        GlobalHannoverDestoCodes.push(code);
+    }
+    return (scrolling === 0) ? "1" + code.toString().padStart(4, "0") :  + ((current + 1) * 10000 + code).toString();
 }
 
 function outputKrugerDestoLine(Allex = "",Code = "",Destination = "",IBIS1 = "",
@@ -77,4 +71,18 @@ function outputHanoverDestoLine(Allex = "",Code = "",Destination = "",IBIS1 = ""
 function copyToClipboard(){
     document.getElementById("output").select();
     document.execCommand("copy");
+}
+
+function checkDuplicateDestoCodes(arr) {
+    let sorted_arr = arr.slice().sort(); // You can define the comparing function here. 
+    // JS by default uses a crappy string compare.
+    // (we use slice to clone the array so the
+    // original array won't be modified)
+    let results = [];
+    for (let i = 0; i < sorted_arr.length - 1; i++) {
+        if (sorted_arr[i + 1] == sorted_arr[i]) {
+        results.push(sorted_arr[i]);
+        }
+    }
+    if (results.length != 0) window.alert(`Duplicate desto codes exist ending in: ${results}`);
 }

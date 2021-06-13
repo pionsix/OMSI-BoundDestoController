@@ -1,4 +1,5 @@
 window.addEventListener("load", start);
+let GlobalHannoverDestoCodes = [];
 
 function start() {
     document.getElementById("build").addEventListener("click", convert)
@@ -11,6 +12,7 @@ function convert() {
     let version = document.getElementById("version").value;
     let hanover = document.getElementById("hanover").checked;
     let customFont = document.getElementById("customFonts").checked;
+
     //contents = contents.split("\t");
     contents = contents.split("\n");
     for (let i = 0; i < contents.length; i++) {
@@ -40,9 +42,8 @@ function generateDestoData(desto, version, title, hanover, customFont) {
     let terminus = "";
     let routes = "";
     let serviceTrip = "";
+
     for (let i = 0; i < desto.length; i++) {
-        console.log(i);
-        console.log(terminus);
         let prepayScreen = false;
         let twoScreens = false
         let flip = false
@@ -51,20 +52,24 @@ function generateDestoData(desto, version, title, hanover, customFont) {
         let rearSmallTop = ""
         let rearSmallBottom = ""
 
-        if (typeof desto[i][18] != "undefined") {
-            const splitRear = desto[i][18].split('|');
-            rearSmallTop = splitRear[0]
-            rearSmallBottom = splitRear[1]
-        }
-
         // Skip if line empty or no Destination set
         if (desto[i].length === 1 || desto[i][4] == "") {
             continue;
         }
-        IBISDesto = desto[i][1].padStart(4, "0").insert(3, 0);
-        // Skip line if doesn't match selected version.
+
+        // Skip if version doesn't match selection
         if (!desto[i][2].includes(version) && desto[i][2] != "") {
             continue;
+        }
+
+        const fixedDestoCode = (desto[i][20] == "") ? false : true;
+
+        IBISDesto = desto[i][1].padStart(4, "0").insert(3, 0);
+
+        if (typeof desto[i][18] != "undefined") {
+            const splitRear = desto[i][18].split('|');
+            rearSmallTop = splitRear[0]
+            rearSmallBottom = splitRear[1]
         }
 
         // Set Service Trip
@@ -93,21 +98,40 @@ function generateDestoData(desto, version, title, hanover, customFont) {
         }
         if (split) {
             const splitParts = desto[i][7].split('|');
-            if (hanover) terminus += outputHanoverDestoLine(
-                desto[i][3],
-                generateHanoverScroll(desto[i][1], 0, 0, desto[i][0]),
-                desto[i][4],
-                IBISOutput(2, version, desto[i]),
-                desto[i][6],
-                splitParts[0] + " " + splitParts[1],
-                desto[i][6],
-                (desto[i][12].includes("*N")) ? "" : desto[i][0],
-                ((desto[i][19] != "") ? desto[i][19] : ""),
-                rearSmallTop,
-                rearSmallBottom,
-                desto[i][6],
-                splitParts[0] + " " + splitParts[1]
-            )
+            // Converts Split Screen into two screens
+            if (hanover) {
+                const mergedLines = splitParts[0] + " " + splitParts[1]
+                terminus += outputHanoverDestoLine(
+                    desto[i][3],
+                    generateHanoverScroll(desto[i][1], desto[i][0], fixedDestoCode, 0, 1),
+                    desto[i][4],
+                    IBISOutput(2, version, desto[i]),
+                    desto[i][6],
+                    "",
+                    desto[i][6],
+                    (desto[i][12].includes("*N")) ? "" : desto[i][0],
+                    ((desto[i][19] != "") ? desto[i][19] : ""),
+                    rearSmallTop,
+                    rearSmallBottom,
+                    desto[i][6],
+                    mergedLines
+                )
+                terminus += outputHanoverDestoLine(
+                    desto[i][3],
+                    generateHanoverScroll(desto[i][1], desto[i][0], fixedDestoCode, 1, 1),
+                    desto[i][4],
+                    IBISOutput(2, version, desto[i]),
+                    mergedLines,
+                    "",
+                    mergedLines,
+                    (desto[i][12].includes("*N")) ? "" : desto[i][0],
+                    ((desto[i][19] != "") ? desto[i][19] : ""),
+                    rearSmallTop,
+                    rearSmallBottom,
+                    desto[i][6],
+                    mergedLines
+                )
+            }
             else terminus += outputKrugerDestoLine(
                 desto[i][3],
                 i,
@@ -151,7 +175,7 @@ function generateDestoData(desto, version, title, hanover, customFont) {
 
                     terminus += outputHanoverDestoLine(
                         desto[i][3],
-                        generateHanoverScroll(desto[i][1], current, scrolling, desto[i][0]),
+                        generateHanoverScroll(desto[i][1], desto[i][0], fixedDestoCode, current, scrolling),
                         desto[i][4],
                         IBISOutput(2, version, desto[i]),
                         top,
@@ -163,7 +187,7 @@ function generateDestoData(desto, version, title, hanover, customFont) {
                         rearSmallBottom,
                         top,
                         bottom
-                    )
+                    );
                 } else {
                     if (current === 1 && twoScreens) {
                         top = desto[i][8] + desto[i][14]; // Top Line
@@ -204,6 +228,10 @@ function generateDestoData(desto, version, title, hanover, customFont) {
         }
         routes += (hanover) ? "" : generateInfoSystemTrips(desto[i], IBISDesto, i);
     }
+    // Check for duplicate Desto Codes as probable with Hannover Mod and reset array.
+    checkDuplicateDestoCodes(GlobalHannoverDestoCodes);
+    GlobalHannoverDestoCodes = [];
+
     return [terminus, serviceTrip, routes];
 }
 
