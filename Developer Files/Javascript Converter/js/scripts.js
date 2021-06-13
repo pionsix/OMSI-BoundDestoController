@@ -41,6 +41,8 @@ function generateDestoData(desto, version, title, hanover, customFont) {
     let routes = "";
     let serviceTrip = "";
     for (let i = 0; i < desto.length; i++) {
+        console.log(i);
+        console.log(terminus);
         let prepayScreen = false;
         let twoScreens = false
         let flip = false
@@ -54,7 +56,6 @@ function generateDestoData(desto, version, title, hanover, customFont) {
             rearSmallTop = splitRear[0]
             rearSmallBottom = splitRear[1]
         }
-
 
         // Skip if line empty or no Destination set
         if (desto[i].length === 1 || desto[i][4] == "") {
@@ -194,7 +195,7 @@ function generateDestoData(desto, version, title, hanover, customFont) {
                     (current * 1000) + i,
                     desto[i][4],
                     IBISOutput(1, version, desto[i]),
-                    terminus += "\tPREPAY ONLY*I",
+                    "\tPREPAY ONLY*I",
                     manageRouteNumber(desto[i], customFont),
                     "",
                     IBISOutput(2, version, desto[i])

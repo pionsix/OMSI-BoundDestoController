@@ -48,7 +48,7 @@ function outputKrugerDestoLine(Allex = "",Code = "",Destination = "",IBIS1 = "",
 }
 
 function IBISOutput (IBISversion, Depot, Desto) {
-    let output = Desto[5] + " (" + Desto[1] + ")";
+    let output = Desto[5] + " " + Desto[1];
     return (IBISversion === 1) ? output.toUpperCase() : output;
 }
 
