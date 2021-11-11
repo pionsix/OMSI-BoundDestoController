@@ -219,7 +219,7 @@ function generateDestoData(desto, version, title, hanover, customFont) {
                     (current * 1000) + i,
                     desto[i][4],
                     IBISOutput(1, version, desto[i]),
-                    "\tPREPAY ONLY*I",
+                    "PREPAY ONLY*I",
                     manageRouteNumber(desto[i], customFont),
                     "",
                     IBISOutput(2, version, desto[i])
