@@ -1,11 +1,11 @@
 function allExit(value) {
-    return (value !== "") ? "{ALLEX}" : "";
+    return (value == true) ? "{ALLEX}" : "";
 }
 
-function manageRouteNumber(desto, customFont){
-    if (desto[0] !== "") {
-        return "*L[" + desto[0] + "]"
-    } else if (!desto[12].includes("*N") && customFont) {
+function manageRouteNumber(routeNum, bound, customFont){
+    if (routeNum != null && routeNum != "") {
+        return "*L[" + routeNum + "]"
+    } else if (!bound && customFont) {
         return "*CN";
     } else {
         return ""
@@ -41,8 +41,8 @@ function outputKrugerDestoLine(Allex = "",Code = "",Destination = "",IBIS1 = "",
         "\r\n";
 }
 
-function IBISOutput (IBISversion, Depot, Desto) {
-    let output = Desto[5] + " " + Desto[1];
+function IBISOutput (IBISversion, destination, code) {
+    let output = destination + " " + code;
     return (IBISversion === 1) ? output.toUpperCase() : output;
 }
 
@@ -85,4 +85,30 @@ function checkDuplicateDestoCodes(arr) {
         }
     }
     if (results.length != 0) window.alert(`Duplicate desto codes exist ending in: ${results}`);
+}
+
+//https://stackoverflow.com/a/9160869
+String.prototype.insert = function(index, string) {
+    if (index > 0) {
+      return this.substring(0, index) + string + this.substr(index);
+    }
+  
+    return string + this;
+  };
+
+
+// https://sebhastian.com/javascript-group-by/
+function groupBy(arr, criteria) {
+    const newObj = arr.reduce(function (acc, currentValue) {
+        if (!acc[currentValue[criteria]]) {
+            acc[currentValue[criteria]] = [];
+        }
+        acc[currentValue[criteria]].push(currentValue);
+        return acc;
+    }, {});
+    return newObj;
+}
+
+function denullify(input) {
+    return (input == null) ? "" : input;
 }

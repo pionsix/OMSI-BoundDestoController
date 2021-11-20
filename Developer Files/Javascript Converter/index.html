@@ -7,19 +7,13 @@
     <link rel="stylesheet" href="css/styles.css">
     <script src="js/scripts.js"></script>
     <script src="js/tools.js"></script>
+    <script src="js/output.js"></script>
+    <script src="js/papaparse.min.js"></script>
 </head>
 <body>
     <textarea id="input" placeholder="Paste from Excel Here" spellcheck="false"></textarea>
     <br>
-    <input type="text" id="title" spellcheck="false" placeholder="HOF Title"></textarea>
-    <br>
-    <select id="version">
-      <option value="1">Legacy</option>
-      <option value="2">New</option>
-      <option value="N">N - North Sydney (SB)</option>
-      <option value="T">T - Terry Hills (Forest)</option>
-      <option value="V">V - Brookvale (SB)</option>
-    </select>
+    <input id="version" type="number" min="0" value="1"></input>
 	<input type="checkbox" id="hanover" name="Hanover" value="1">
 	<label for="hanover">Studio Polygon Hanover?</label><br>
     <input type="checkbox" id="customFonts" name="customFonts" value="1">
